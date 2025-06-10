@@ -14,12 +14,13 @@ import {
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonSkeletonText,
-  IonAlert,
+  IonAlert, IonSearchbar,
 } from '@ionic/angular/standalone';
 import { MovieService } from '../services/movie.service';
 import { DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { catchError, finalize } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-home',
@@ -42,6 +43,8 @@ import { catchError, finalize } from 'rxjs';
     IonAlert,
     DatePipe,
     RouterModule,
+    IonSearchbar,
+    FormsModule,
   ],
 })
 export class HomePage implements OnInit {
@@ -49,11 +52,13 @@ export class HomePage implements OnInit {
 
   private currentPage = 1;
   public movies: any[] = [];
+  public filteredMovies: any[] = [];
+  public filterTerm: string = '';
+
   public imageBaseUrl = 'https://image.tmdb.org/t/p';
   public isLoading = true;
   public error = null;
   public dummyArray = new Array(5);
-
 
   ngOnInit() {
     this.loadMovies();
@@ -62,11 +67,9 @@ export class HomePage implements OnInit {
   async loadMovies(event?: InfiniteScrollCustomEvent) {
     this.error = null;
 
-
     if (!event) {
       this.isLoading = true;
     }
-
 
     this.movieService
       .getTopRatedMovies(this.currentPage)
@@ -81,12 +84,10 @@ export class HomePage implements OnInit {
       )
       .subscribe({
         next: (res) => {
-
           this.movies.push(...res.results);
-
+          this.filterMovies(); // aktualizuj filtrované filmy
 
           event?.target.complete();
-
 
           if (event) {
             event.target.disabled = res.total_pages === this.currentPage;
@@ -95,9 +96,15 @@ export class HomePage implements OnInit {
       });
   }
 
-
   loadMore(event: InfiniteScrollCustomEvent) {
     this.currentPage++;
     this.loadMovies(event);
+  }
+
+  filterMovies() {
+    const term = this.filterTerm.toLowerCase();
+    this.filteredMovies = this.movies.filter(movie =>
+      movie.title.toLowerCase().includes(term)
+    );
   }
 }
